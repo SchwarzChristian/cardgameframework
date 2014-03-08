@@ -5,14 +5,29 @@
  *      Author: user
  */
 
+#include <sstream>
+
 #include "Card.h"
 
-Card::Card(int value, char suit) {
+Card::Card(int value, char suit,string bitmap) {
 	static int lastID = 0;
-	_id = lastID++;
-	_value = value;
-	_suit = suit;
+	_value  = value;
+	_suit   = suit;
+	_bitmap = bitmap;
 }
+
+string Card::toString() {	// TODO using stringstream
+	stringstream out;
+	out << ", Value: " << getValue()
+		<< ", Suit: " << getSuit()
+		<< ", Bitmap: " << getBitmap() << endl;
+	return out.str();
+}
+
+
+
+
+
 
 
 

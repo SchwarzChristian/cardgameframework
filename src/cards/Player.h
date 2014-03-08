@@ -13,6 +13,7 @@
 class Player: public Deck {
 public:
 	Card* operator[](int id) { return NULL; };
+	friend int test();
 };
 
 #endif /* PLAYER_H_ */

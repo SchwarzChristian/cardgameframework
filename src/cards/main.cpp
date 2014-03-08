@@ -5,22 +5,17 @@
  *      Author: user
  */
 
-#define TESTING
-
 #include <string>
 #include <iostream>
 #include <cstring>
+#include <cstdlib>
 
-#ifdef TESTING
 #include "test.h"
-#endif
 
 using namespace std;
 
 int main(int argc, char* argv[]) {
-#ifdef TESTING
 	if (argc > 1 and not strcmp(argv[1], "test")) return test();
-#endif
 
 	return 0;
 }

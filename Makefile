@@ -1,7 +1,7 @@
 CC = g++
 CFLAGS = -pg -Wall -DTESTING
 LIBRARIES = -lGL -lGLU -lglut -l3ds
-OBJECTS = $(patsubst %.cpp, %.o, $(wildcard src/cards/*.cpp))
+OBJECTS = $(patsubst %.cpp, %.o, $(wildcard src/*/*.cpp))
 BINARY = cardgametest
 
 tested: all test

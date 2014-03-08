@@ -9,17 +9,22 @@
 #define CARD_H_
 
 #include <iostream>
+#include <string>
+
+using namespace std;
 
 class Card {
 private:
-	int  _id;
-	int  _value;
-	char _suit;
+	int    _value;
+	char   _suit;
+	string _bitmap;
 public:
-	Card(int value, char suit);
-	int getID() { return _id; };
-	int getValue() { return _value; };
-	int getSuit() { return (int)_suit; };
+	Card(int value, char suit, string bitmap = "");
+	int    getValue() { return _value; };
+	int    getSuit() { return (int)_suit; };
+	string getBitmap() { return _bitmap; };
+	string toString();
+	friend int test();
 };
 
 #endif /* CARD_H_ */
