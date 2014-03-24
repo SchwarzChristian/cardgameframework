@@ -15,7 +15,7 @@
 
 using namespace std;
 
-class Cardlist {			// TODO needs destructor
+class Cardlist {
 private:
 	int _count;
 	int _maxID;

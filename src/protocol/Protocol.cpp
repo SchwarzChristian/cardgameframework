@@ -17,10 +17,9 @@
 #define BUFSIZE 1024
 #endif
 
-#ifndef START
 #define START "\x23\x42\x13\x37\x83\x42\x59\x06"
-#endif
 
+#define SHUTDOWN "shutdown\n\n"
 
 #ifndef SLEEPTIME
 #define SLEEPTIME 1000
@@ -47,64 +46,92 @@ typedef struct {
     char              sa_data[14];  // 14 bytes of protocol address
 } Sockaddr;
 
-string splitPackets(string s = "") {
-	static string buf = "";
-	string ret = "";
-	int pos, pos1;
-	buf += s;
-	pos = buf.find(START, 0);
-	pos1 = buf.find(START, pos + 1);
+string* getPacket(int file, bool pvalid = false) {
+	static string ret;
+	bool valid = pvalid;
+	char buf;
+	char start[5];
+	char null[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int i;
+	ret = "";
+	do {
+		if (!read(file, &buf, 1)) return NULL;
+		start[i] = buf;
+		if (start[i] == START[i]) i++;
+		if (i > 7) {
+			memcpy(null, start, 8);
+			ret.clear();
+			i = 0;
+			valid = true;
+			continue;
+		}
+		ret += buf;
+		if (ret.length() < 2) continue;
+	} while (valid && ret.substr(ret.length() - 2) == "\n\n");
 
-	if (pos == 0)
-	ret = buf.substr(pos, pos1 - pos);
-	buf = buf.substr(pos1, buf.length() - pos1);
-	return ret;
+	return &ret;
 }
 
 // for servers communication with clients
-void forkClient(int sock, int* ppsend, int* pprecv) {
-	char buf[BUFSIZE];
-	int  len;
-	int psend = ppsend[0];
-	int precv = pprecv[1];
-	if (fork > 0) do {
+bool forkClient(int port, int maxClients, int *ppsend, int *pprecv) {
+	if (fork > 0) {
+		int  server = 0;
+		string *packet;
+		Sockaddr_in serverAddr;
+		server = socket(AF_INET, SOCK_STREAM, 0);
+		if (server < 0) return false;
+
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_addr.s_addr = INADDR_ANY;
+		serverAddr.sin_port = htons(port);
+
+		if ( bind(server, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) return false;
+		else listen(server, 0);
+
+		int  psend = ppsend[0];
+		int  precv = pprecv[1];
+		int  sock[maxClients];
+		int  socks = 0;
+
 		close(ppsend[1]);
 		close(pprecv[0]);
-		usleep(SLEEPTIME);
 
-		if ((len = recv(sock, buf, BUFSIZE, 0)) > 0 )
-			write(precv, buf, len);
+		for (;;) {
+			// route data from sockets to pipe
+			packet->clear();
+			for (int i = 0; i < socks; i++)
+				if ((packet = getPacket(sock[i])))
+					if (*packet == SHUTDOWN)
+						write(precv, packet->c_str(), packet->length());
 
-		if ((len = read(psend, buf, BUFSIZE)) > 0 )
-			send(sock, buf, len, 0);
-	} while(strcmp(buf + 6, "close"));
-	close(ppsend[0]);
+			// route data from pipe to the right socket
+			packet->clear();
+			while ((packet = getPacket(psend, true)))
+				send(sock[(int)packet->at(9)], (string(START) + *packet).c_str(), packet->length() + 8, 0);
+
+			// TODO accept-zeug
+
+			usleep(SLEEPTIME);
+		}
+		for (int i = 0; i < socks; i++)
+			close(sock[i]);
+		close(ppsend[0]);
+		close(pprecv[1]);
+	}
+	return true;
 }
 
-Protocol::Protocol(int port) {
-	Sockaddr_in server;
-	_sock = socket(AF_INET, SOCK_STREAM, 0);
-	if (_sock < 0) {
-		_status = SOCK_NEW;
-		return;
-	}
-
-	server.sin_family = AF_INET;
-	server.sin_addr.s_addr = INADDR_ANY;
-	server.sin_port = htons(port);
-
-	for (int i = 0; i < 256; i++) {
-		_psend[i] = -1;
-	}
+Protocol::Protocol(int port, int maxClients) {
+	int ptmp[4];
 
 	_status = SOCK_BOUND;
-	pipe(_precv);
+	pipe(ptmp);
+	pipe(ptmp + 2);
 
-	if ( bind(_sock,(sockaddr *)&server, sizeof(server)) < 0) {
-		_status = SOCK_INIT;
-		_precv[0] = -1;
-		_precv[1] = -1;
-	} else listen(_sock, 0);
+	_psend = ptmp[1];
+	_precv = ptmp[2];
+
+	forkClient(PORT, maxClients > 256 ? 256 : maxClients, ptmp, ptmp + 2);
 
 }
 
@@ -126,26 +153,14 @@ Protocol::Protocol(string addr, int port) {
     }
 }
 
+// TODO recv objects
 void* Protocol::recvObj() {
 	char* buf[BUFSIZE];
 	recv(_sock, buf, BUFSIZE, 0);
 	return (void*)*buf;
 }
 
+// TODO send objects
 void Protocol::sendObj(void *data, int len) {
-	send(_sock, data, len, 0);
-}
-
-void Protocol::waitForClients() {
-	int ptmp[2];
-	pipe(ptmp);
-	for (int i = 0; i < 256; i++)
-		if (_precv[i] < 0)
-			_precv[i] = ptmp[0];
-	forkClient(accept(_sock, NULL, NULL), ptmp, _precv);
-}
-
-Protocol::~Protocol() {
-	close(_sock);
 }
 

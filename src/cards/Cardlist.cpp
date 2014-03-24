@@ -5,7 +5,7 @@
  *      Author: user
  */
 
-#include <sstream> 					// TODO using stringstream
+#include <sstream>
 #include <string>
 
 #include "Cardlist.h"
@@ -15,12 +15,12 @@ using namespace std;
 
 Cardlist::Cardlist(int cards) {
 	_count = 0;
-	_maxID = cards;					// TODO init maxID
+	_maxID = cards;
 	_cards = new Card*[cards];
 }
 
 Cardlist& Cardlist::add(Card* card) {
-	if (_count < _maxID)			// TODO checking maxID
+	if (_count < _maxID)
 		_cards[_count++] = card;
 	return *this;
 }
@@ -30,7 +30,7 @@ Card* Cardlist::operator [](int id) {
 	return _cards[id];
 }
 
-string Cardlist::toString() {		// TODO using stringstream
+string Cardlist::toString() {
 	stringstream out;
 	out << "count: " << _count << "/" << _maxID << "\n";
 	for (int i = 0; i < _count; i++) {

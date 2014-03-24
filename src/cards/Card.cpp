@@ -16,7 +16,7 @@ Card::Card(int value, char suit,string bitmap) {
 	_bitmap = bitmap;
 }
 
-string Card::toString() {	// TODO using stringstream
+string Card::toString() {
 	stringstream out;
 	out << ", Value: " << getValue()
 		<< ", Suit: " << getSuit()

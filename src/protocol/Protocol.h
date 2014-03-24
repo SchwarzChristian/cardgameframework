@@ -19,17 +19,15 @@ using namespace std;
 
 class Protocol {
 private:
-	int _sock;
 	int _status;
-	int _precv[2];
-	int _psend[256];
+	int _sock;
+	int _psend;		// data that should be send
+	int _precv;		// data that should be received
 public:
-	Protocol(int port = PORT);				// server
+	Protocol(int port = PORT, int maxClients = 256);				// server
 	Protocol(string addr, int port = PORT);	// client
 	void sendObj(void* data, int length);
 	void* recvObj();
-	void waitForClients();
-	virtual ~Protocol();
 };
 
 #endif /* PROTOCOL_H_ */
